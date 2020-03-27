@@ -18,9 +18,6 @@ def closest_node(node, nodes):
     dist_2 = np.sum((nodes - node)**2, axis=1)
     return np.argmin(dist_2)
 
-
-
-
 #load in cell coords with Kyles CSV
 
 
@@ -50,17 +47,9 @@ def return_growth_front(file_name):
     ax.set_xlim(rxmin, rxmax)
     ax.set_ylim(rymin, rymax)
 
-
-
-
-
-
     # I get nan and I dont know why..... so I a removing it, just being cautious
     # You prob have a better idea why theres an NaN in the time indicator col
     the_time_points = np.unique(time)
-
-
-
     #Loop through the time points, at each time point find the growth front, use a gmm
     #to filtre out outliers -this a bit much IG but its convinient for me- 
     #Use the most lenient -largest- density kernel.
@@ -148,14 +137,7 @@ def return_growth_front(file_name):
                     dist = dist * -1
                 dist_from_growth_front.append(dist)
 
-
-
         else :    
-            #plt.plot(cset.allsegs[growth_front][0][:,0], cset.allsegs[growth_front][0][:,1])
-        
-        
-        
-        
             for fragment in cset.allsegs[growth_front]:
                 counter =  counter + len(fragment)
                 print(len(fragment))
@@ -198,3 +180,16 @@ def return_growth_front(file_name):
                 matplotlib.image.imsave(('/home/lpe/Downloads/results/'+ time_point+'_' +'name.png'), mask)
 
     return(dist_from_growth_front,x,y,time)
+
+#Growth Stats
+def growth_stats(older_mask,newer_mask):
+    md = (np.subtract((older_mask *1 ) , (newer_mask * 1)))
+    counts = np.unique(md, return_counts= True)
+    growth_diff = counts[1][0]
+    md[md == -1] = 255
+    md[md != 255] = 0
+    growth_image = md
+    #plt.imshow(md)
+    return(growth_diff, growth_image)
+
+#TODO find a better way to make masks.
