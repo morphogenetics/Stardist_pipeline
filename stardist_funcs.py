@@ -123,7 +123,9 @@ def return_growth_front(file_name):
 
             pts = np.array(make_the_mask, dtype=np.int32)
             #print((np.ceil(xmax), np.ceil(ymax)))
-
+            pts = np.vstack((pts,[xmin,ymin]))
+            pts = np.vstack((pts,[xmin,ymax]))
+            pts = np.array(pts, dtype=np.int32)
             intxmax =  np.int(np.ceil(rxmax)) + 1
             intymax = np.int(np.ceil(rymax)) + 1
             mask = np.zeros((intymax, intxmax))
@@ -170,10 +172,6 @@ def return_growth_front(file_name):
             
             
             pts = np.array(make_the_mask, dtype=np.int32)
-            pts = np.vstack((pts,[xmin,ymin]))
-            pts = np.vstack((pts,[xmin,ymax]))
-            pts = np.array(pts, dtype=np.int32)
-            
             #print((np.ceil(xmax), np.ceil(ymax)))
 
             intxmax =  np.int(np.ceil(rxmax)) + 1
@@ -197,4 +195,6 @@ def return_growth_front(file_name):
                 if in_or_out == True:
                     dist = dist * -1
                 dist_from_growth_front.append(dist)
-        return(dist_from_growth_front,x,y,time)
+                matplotlib.image.imsave(('/home/lpe/Downloads/results/'+ time_point+'_' +'name.png'), mask)
+
+    return(dist_from_growth_front,x,y,time)
