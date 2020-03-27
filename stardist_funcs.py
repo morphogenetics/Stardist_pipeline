@@ -197,3 +197,4 @@ def return_growth_front(file_name):
                 if in_or_out == True:
                     dist = dist * -1
                 dist_from_growth_front.append(dist)
+        return(dist_from_growth_front,x,y,time)
