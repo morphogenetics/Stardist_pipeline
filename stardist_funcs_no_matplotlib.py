@@ -1,40 +1,43 @@
-import scipy.stats as st
-#from __future__ import print_function, unicode_literals, absolute_import, division
-import numpy as np
-import matplotlib.pyplot as plt
-%matplotlib inline
+def contours_to_mask(path,ymax,xmax,ymin,xmin):
+    
+    full_path = np.array([0,2])
+    
+    segments = path.collections[1].get_paths()
+    for segment in segments:
+        verts = segment.vertices
+        full_path =  np.vstack([full_path, verts])
+    
+    mask = np.zeros((int(ymax), int(xmax)))
+    cv2.fillConvexPoly(mask, full_path.astype('int'), 1) 
+    mask = mask.astype(np.bool)
+    mask = mask[int(xmin):, int(ymin):]
+    
+    return(mask)
 
-from glob import glob
-from tqdm import tqdm
-from tifffile import imread
+def difference_of_masks(earlier,later,ymax,xmax,ymin,xmin):
 
-from matplotlib import cm
-from scipy import spatial
+    early_mask = contours_to_mask(earlier_gf,rymax,rxmax,rymin,rxmin)
+    later_mask = contours_to_mask(later_gf,rymax,rxmax,rymin,rxmin)
 
-# Use this function to find the index of closest point in growth front 
-# to the relevant osteoclast
-def closest_node(node, nodes):
-    nodes = np.asarray(nodes)
-    dist_2 = np.sum((nodes - node)**2, axis=1)
-    return np.argmin(dist_2)
+    diff_mask = ((later_mask * 1) - ( early_mask * 1))
 
+    the_counts = sum((diff_mask.ravel() == 0 ) * 1)
+    return(the_counts)
 
-growth_front_leniency = 60 #########What Quantile filter do you want remove
-
-
-#load in cell coords with Kyles CSV
-
-
-file_name = "/home/lpe/Downloads/results/190305_0_12hr_stats.csv"
-def return_growth_front(file_name,growth_front_leniency):
+### in order to deal with the 'stupid contour  > 1 crap' you can buffer
+### the meshgrid with with extra space so a full contour can be created
+### with matplotlib....this makes everything downstream alot easier
+### the code for this is on line 69
+### the full contour is bounded by xmax and ymax during mask creation
+### it is then bounded by ymin,xmin during mask creation
+def growth_front_kde(file,buffer,frame):
+    
     csv = np.genfromtxt (file_name, delimiter=",")
     first = csv[1:,0]
     second = csv[1:,1]
     time = csv[1:,2]
-    distance_from_growth_front_master = []
 
-
-    x = second
+    x = second 
     y = first
 
     # Define the borders
@@ -42,61 +45,31 @@ def return_growth_front(file_name,growth_front_leniency):
     rxmax = max(x) #+ deltaX
     rymin = min(y) #- deltaY
     rymax = max(y) #+ deltaY
+    ax = fig.gca()
 
-    # I get nan and I dont know why..... so I a removing it, just being cautious
-    # You prob have a better idea why theres an NaN in the time indicator col
+    ax.set_xlim((rxmin -buffer), (rxmax + buffer))#############
+    ax.set_ylim((rymin - buffer), (rymax + buffer))############
+
     the_time_points = np.unique(time)
-for time_point in the_time_points:
+
+    growth_front = 1
+
+    time_point = frame
+
+    print(time_point)
 
     dist_from_growth_front = []
     x = second[time == time_point]
     y = first[time == time_point]
-
-
-    # Define the borders
-    xmin = min(x) #- deltaX
-    xmax = max(x) #+ deltaX
-    ymin = min(y) #- deltaY
-    ymax = max(y) #+ deltaY
     intxmax =  np.int(np.ceil(rxmax)) + 1
     intymax = np.int(np.ceil(rymax)) + 1
     mask = np.zeros((intymax, intxmax))
 
-    # Create meshgrid
-    xx, yy = np.mgrid[xmin:xmax:1000j, ymin:ymax:1000j]
+    # Create meshgrid# IT MUST BE BUFFERED SO THAT A SINGLE CONTOUR IS GENERATED
+    xx, yy = np.mgrid[(xmin - buffer):(xmax + buffer):2000j, (ymin -buffer):(ymax + buffer):2000j]
     positions = np.vstack([xx.ravel(), yy.ravel()])
     values = np.vstack([x, y])
     kernel = st.gaussian_kde(values)
     f = np.reshape(kernel(positions).T, xx.shape)
-
-    import cv2
-    ft = f.T
-    ftint = (ft * 10000000000000).astype(int)
-    resized = cv2.resize(ftint.astype(float), ((int(xmax) + 1),(int(ymax) + 1)), interpolation = cv2.INTER_NEAREST)
-    quants = np.percentile(resized , growth_front_leniency)
-
-    resized[resized < quants] = 0
-    resized[resized != 0] = 255
-    idx = cv2.findContours(resized.astype(np.uint8), cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)[1][0]
-    out = np.zeros_like(resized)
-    out[idx[:,0,1],idx[:,0,0]] = 255
-    make_the_mask = np.asarray([np.nonzero(out)[1],np.nonzero(out)[0]]).T
-
-
-    for run, rise in zip(x,y):
-
-        node = np.array([int(run) , int(rise)])
-        nodes = make_the_mask
-        in_or_out = resized[node[1],node[0]]
-
-        closest_line =closest_node(node, nodes)
-        closest_point_on_line = nodes[closest_line]
-        dist = np.linalg.norm(closest_point_on_line - node)
-        if in_or_out == 0:
-            dist = dist * -1
-        dist_from_growth_front.append(dist)
-    distance_from_growth_front_master.append(dist_from_growth_front)
-    
-return(distance_from_growth_front_master,x,y,time)    
-    #img_name = '/home/lpe/Downloads/results/'+ str(time_point)+'_' +'name.jpg'
-    #cv2.imwrite(img_name, resized)
+    cset = ax.contour(xx, yy, f)
+    return(cset)
