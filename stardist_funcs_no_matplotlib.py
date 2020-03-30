@@ -1,8 +1,8 @@
-def contours_to_mask(path,ymax,xmax,ymin,xmin):
+def contours_to_mask(path_name,ymax,xmax,ymin,xmin):
     
     full_path = np.array([0,2])
     
-    segments = path.collections[1].get_paths()
+    segments = path_name.collections[1].get_paths()
     for segment in segments:
         verts = segment.vertices
         full_path =  np.vstack([full_path, verts])
@@ -16,8 +16,8 @@ def contours_to_mask(path,ymax,xmax,ymin,xmin):
 
 def difference_of_masks(earlier,later,ymax,xmax,ymin,xmin):
 
-    early_mask = contours_to_mask(earlier,rymax,rxmax,rymin,rxmin)
-    later_mask = contours_to_mask(later,rymax,rxmax,rymin,rxmin)
+    early_mask = contours_to_mask(earlier,ymax,xmax,ymin,xmin)
+    later_mask = contours_to_mask(later,ymax,xmax,ymin,xmin)
 
     diff_mask = ((later_mask * 1) - ( early_mask * 1))
 
@@ -30,6 +30,7 @@ def difference_of_masks(earlier,later,ymax,xmax,ymin,xmin):
 ### the code for this is on line 69
 ### the full contour is bounded by xmax and ymax during mask creation
 ### it is then bounded by ymin,xmin during mask creation
+### DONT RUN THIS... THIS IS JUST AN EXAMPLE OF HOW A BUFFER MIGHT BE USED SO A SINGLE CONTOUR IS GENERATED
 def growth_front_kde(file,buffer,frame):
     
     csv = np.genfromtxt (file_name, delimiter=",")
