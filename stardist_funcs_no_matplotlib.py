@@ -16,8 +16,8 @@ def contours_to_mask(path,ymax,xmax,ymin,xmin):
 
 def difference_of_masks(earlier,later,ymax,xmax,ymin,xmin):
 
-    early_mask = contours_to_mask(earlier_gf,rymax,rxmax,rymin,rxmin)
-    later_mask = contours_to_mask(later_gf,rymax,rxmax,rymin,rxmin)
+    early_mask = contours_to_mask(earlier,rymax,rxmax,rymin,rxmin)
+    later_mask = contours_to_mask(later,rymax,rxmax,rymin,rxmin)
 
     diff_mask = ((later_mask * 1) - ( early_mask * 1))
 
